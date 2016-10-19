@@ -152,7 +152,5 @@ if __name__ == '__main__':
     configure_logging()
 
     dbmodels.create_tables()
-    port = 5000
-    if 'PORT' in os.environ:
-        port = os.environ['PORT']
+    port = os.environ.get('PORT', 5000)
     app.run(host='0.0.0.0', port=port)
