@@ -4,13 +4,13 @@
 from flask import Flask
 from flask import request
 import logging
+import os
 
 import dbapi as db
 import dbmodels
 
 app = Flask('aviato')
 LOG = app.logger
-
 
 
 @app.route('/users/<userid>')
@@ -111,6 +111,7 @@ def update_group(name):
 
     return user.to_json()
 
+
 @app.route('/groups/<name>', methods=('delete',))
 def delete_group(name):
     if db.delete_group(name):
@@ -146,10 +147,9 @@ def configure_logging():
 
 
 if __name__ == '__main__':
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
     configure_logging()
 
-    #dbmodels.db.init_app(app)
-    #with app.app_context():
     dbmodels.create_tables()
-    app.run(host='127.0.0.1', port=5000)
+    app.run(host='0.0.0.0', port=80)
