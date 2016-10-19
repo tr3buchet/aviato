@@ -10,7 +10,6 @@ import dbmodels
 
 app = Flask('aviato')
 LOG = app.logger
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 
 # to suppress some deprecation warnings
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
@@ -38,7 +37,7 @@ def add_user():
         user = db.create_user(request.json['first_name'],
                               request.json['last_name'],
                               request.json['userid'],
-                              request.json['groups'])
+                              request.json.get('groups', []))
     except db.UserGroupDoesNotExist as e:
         return 'cannot create user, %s' % e, 400
     LOG.info('added %r', user)
@@ -108,7 +107,10 @@ def configure_logging():
 
 
 if __name__ == '__main__':
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     configure_logging()
 
+    #dbmodels.db.init_app(app)
+    #with app.app_context():
     dbmodels.create_tables()
     app.run(host='127.0.0.1', port=5000)

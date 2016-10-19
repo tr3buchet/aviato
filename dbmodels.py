@@ -1,25 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import json
 
-from app import app
-
-db = SQLAlchemy(app)
+db = SQLAlchemy(Flask('aviato'))
 
 
 user_group_association = db.Table(
     'usersgroups', db.Model.metadata,
-    db.Column('userid', db.String(35), db.ForeignKey('users.userid')),
+    db.Column('userid', db.String, db.ForeignKey('users.userid')),
     db.Column('groupname', db.Integer, db.ForeignKey('groups.name')))
 
 
 class User(db.Model):
     __tablename__ = 'users'
-    userid = db.Column(db.String(35), primary_key=True)
-    first_name = db.Column(db.String(35))
-    last_name = db.Column(db.String(35))
+    userid = db.Column(db.String, primary_key=True)
+    first_name = db.Column(db.String)
+    last_name = db.Column(db.String)
 
     groups = db.relationship('Group', secondary=user_group_association,
                              backref='users')
@@ -65,3 +64,7 @@ class Group(db.Model):
 
 def create_tables():
     db.create_all()
+
+
+def destroy_tables():
+    db.drop_all(bind=None)
