@@ -6,9 +6,21 @@ from dbmodels import User
 from dbmodels import Group
 
 
+class UserGroupDoesNotExist(Exception):
+    def __init__(self, name):
+        msg = 'user group %s does not exist' % name
+        super(UserGroupDoesNotExist, self).__init__(msg)
+
+
 ##################>> users <<##################################################
 def create_user(first_name, last_name, userid, groups=None):
     user = User(first_name, last_name, userid)
+    for name in groups or []:
+        group = get_group(name)
+        if group:
+            user.groups.append(group)
+        else:
+            raise UserGroupDoesNotExist(name)
     db.session.add(user)
     db.session.commit()
     return user
