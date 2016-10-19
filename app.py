@@ -152,4 +152,4 @@ if __name__ == '__main__':
     configure_logging()
 
     dbmodels.create_tables()
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=5000)
