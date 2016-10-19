@@ -1,6 +1,8 @@
+[![Build Status](https://travis-ci.org/tr3buchet/aviato.svg?branch=master)](https://travis-ci.org/tr3buchet/aviato)
+
 # use with heroku is easiest
 ## easy button
-#[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/tr3buchet/aviato)
+[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/tr3buchet/aviato)
 
 after the deploy is complete click "view app"
 
