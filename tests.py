@@ -35,23 +35,12 @@ class AddUserTestCase(unittest.TestCase):
     def tearDown(self):
 #        with app.app_context():
         dbmodels.destroy_tables()
+        dbmodels.db.session.remove()
 
     def test_add_user_empty_groups(self):
         u = {'first_name': 'john', 'last_name': 'schwinghammer',
              'userid': 'jschwing', 'groups': []}
         r = self.app.post('/users', data=json.dumps(u),
-                          headers={'content-type': 'application/json'})
-        self.assertEqual(r.status_code, 200)
-        r = self.app.get('/users/jschwing')
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(json.loads(r.data), u)
-
-    def test_add_user_no_groups(self):
-        u = {'first_name': 'john', 'last_name': 'schwinghammer',
-             'userid': 'jschwing', 'groups': []}
-        u2 = u.copy()
-        del u2['groups']
-        r = self.app.post('/users', data=json.dumps(u2),
                           headers={'content-type': 'application/json'})
         self.assertEqual(r.status_code, 200)
         r = self.app.get('/users/jschwing')
@@ -104,6 +93,7 @@ class GetUserTestCase(unittest.TestCase):
 
     def tearDown(self):
         dbmodels.destroy_tables()
+        dbmodels.db.session.remove()
 
     def test_get_nonexistent_user(self):
         r = self.app.get('/users/baduserid')
@@ -133,6 +123,7 @@ class DeleteUserTestCase(unittest.TestCase):
 
     def tearDown(self):
         dbmodels.destroy_tables()
+        dbmodels.db.session.remove()
 
     def test_delete_nonexistent_user(self):
         r = self.app.delete('/users/baduserid')
@@ -182,6 +173,7 @@ class PutUserTestCase(unittest.TestCase):
 
     def tearDown(self):
         dbmodels.destroy_tables()
+        dbmodels.db.session.remove()
 
     def test_put_user_add_group(self):
         r = self.app.get('/users/%s' % self.test_user3['userid'])
@@ -189,7 +181,7 @@ class PutUserTestCase(unittest.TestCase):
         self.assertEqual(len(json.loads(r.data)['groups']), 0)
         user = self.test_user3.copy()
         user['groups'] = [self.test_group1['name'], self.test_group2['name']]
-        r = self.app.put('/users/%s' % user['userid'], json.dumps(user),
+        r = self.app.put('/users/%s' % user['userid'], data=json.dumps(user),
                          headers={'content-type': 'application/json'})
         self.assertEqual(r.status_code, 200)
 
@@ -201,7 +193,7 @@ class PutUserTestCase(unittest.TestCase):
         # test user was added to groups
         r = self.app.get('/groups/%s' % self.test_group1['name'])
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(len(json.loads(r.data)['groups']), 3)
+        self.assertEqual(len(json.loads(r.data)['users']), 3)
 
     def test_put_user_remove_group(self):
         r = self.app.get('/users/%s' % self.test_user1['userid'])
@@ -209,7 +201,7 @@ class PutUserTestCase(unittest.TestCase):
         self.assertEqual(len(json.loads(r.data)['groups']), 2)
         user = self.test_user1.copy()
         user['groups'] = [self.test_group2['name']]
-        r = self.app.put('/users/%s' % user['userid'], json.dumps(user),
+        r = self.app.put('/users/%s' % user['userid'], data=json.dumps(user),
                          headers={'content-type': 'application/json'})
         self.assertEqual(r.status_code, 200)
 
@@ -223,10 +215,25 @@ class PutUserTestCase(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(len(json.loads(r.data)['users']), 1)
 
+    def test_put_user_nonexistent_group(self):
+        r = self.app.get('/users/%s' % self.test_user1['userid'])
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(json.loads(r.data)['groups']), 2)
+        user = self.test_user1.copy()
+        user['groups'].append('blimey')
+        r = self.app.put('/users/%s' % user['userid'], data=json.dumps(user),
+                         headers={'content-type': 'application/json'})
+        self.assertEqual(r.status_code, 400)
+
+        # test no groups were removed
+        r = self.app.get('/users/%s' % user['userid'])
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(json.loads(r.data)['groups']), 2)
+
     def test_put_user_change_name(self):
         user = self.test_user4.copy()
         user['last_name'] = 'goober'
-        r = self.app.put('/users/%s' % user['userid'], json.dumps(user),
+        r = self.app.put('/users/%s' % user['userid'], data=json.dumps(user),
                          headers={'content-type': 'application/json'})
         self.assertEqual(r.status_code, 200)
 
@@ -234,14 +241,6 @@ class PutUserTestCase(unittest.TestCase):
         r = self.app.get('/users/%s' % user['userid'])
         self.assertEqual(r.status_code, 200)
         self.assertEqual(json.loads(r.data)['last_name'], 'goober')
-
-    def test_put_user_change_userid(self):
-        user = self.test_user4.copy()
-        user['userid'] = 'goober'
-        r = self.app.put('/users/%s' % self.test_user4['userid'],
-                         json.dumps(user),
-                         headers={'content-type': 'application/json'})
-        self.assertEqual(r.status_code, 400)
 
 
 class AddDeleteGroupTestCase(unittest.TestCase):
@@ -261,6 +260,7 @@ class AddDeleteGroupTestCase(unittest.TestCase):
 
     def tearDown(self):
         dbmodels.destroy_tables()
+        dbmodels.db.session.remove()
 
     def test_add_group(self):
         g = {'name': 'hammers'}
@@ -296,6 +296,7 @@ class GetGroupTestCase(unittest.TestCase):
 
     def tearDown(self):
         dbmodels.destroy_tables()
+        dbmodels.db.session.remove()
 
     def test_get_nonexistent_group(self):
         r = self.app.get('/groups/bingsucks')
@@ -327,6 +328,7 @@ class DeleteGroupTestCase(unittest.TestCase):
 
     def tearDown(self):
         dbmodels.destroy_tables()
+        dbmodels.db.session.remove()
 
     def test_delete_nonexistent_group(self):
         r = self.app.delete('/groups/flibbertigibbet')
@@ -376,18 +378,21 @@ class PutGroupTestCase(unittest.TestCase):
 
     def tearDown(self):
         dbmodels.destroy_tables()
+        dbmodels.db.session.remove()
 
     def test_put_group_add_users(self):
         r = self.app.get('/groups/%s' % self.test_group2['name'])
+        rd = json.loads(r.data)
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(len(json.loads(r.data)['users']), 2)
-        group = self.test_group2.copy()
+        self.assertEqual(len(rd['users']), 2)
+        group = rd
         group['users'] = [self.test_user1['userid'],
                           self.test_user2['userid'],
                           self.test_user3['userid'],
                           self.test_user4['userid']]
-        r = self.app.put('/groups/%s' % group['name'], json.dumps(group),
+        r = self.app.put('/groups/%s' % group['name'], data=json.dumps(group),
                          headers={'content-type': 'application/json'})
+        self.assertEqual(r.status_code, 200)
 
         # test users were added
         r = self.app.get('/groups/%s' % group['name'])
@@ -401,12 +406,14 @@ class PutGroupTestCase(unittest.TestCase):
 
     def test_put_group_remove_users(self):
         r = self.app.get('/groups/%s' % self.test_group2['name'])
+        rd = json.loads(r.data)
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(len(json.loads(r.data)['users']), 2)
-        group = self.test_group2.copy()
+        self.assertEqual(len(rd['users']), 2)
+        group = rd
         group['users'] = [self.test_user1['userid']]
-        r = self.app.put('/groups/%s' % group['name'], json.dumps(group),
+        r = self.app.put('/groups/%s' % group['name'], data=json.dumps(group),
                          headers={'content-type': 'application/json'})
+        self.assertEqual(r.status_code, 200)
 
         # test users were removed
         r = self.app.get('/groups/%s' % group['name'])
@@ -417,6 +424,21 @@ class PutGroupTestCase(unittest.TestCase):
         r = self.app.get('/users/%s' % self.test_user2['userid'])
         self.assertEqual(r.status_code, 200)
         self.assertEqual(len(json.loads(r.data)['groups']), 1)
+
+    def test_put_group_nonexistent_user(self):
+        r = self.app.get('/groups/%s' % self.test_group2['name'])
+        rd = json.loads(r.data)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(rd['users']), 2)
+        group = rd
+        group['users'].append(u'strongbad')
+        r = self.app.put('/groups/%s' % group['name'], data=json.dumps(group),
+                         headers={'content-type': 'application/json'})
+
+        # test no users were removed
+        r = self.app.get('/groups/%s' % group['name'])
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(json.loads(r.data)['users']), 2)
 
 
 class TestUserGroupAssociation(unittest.TestCase):
@@ -449,6 +471,7 @@ class TestUserGroupAssociation(unittest.TestCase):
 
     def tearDown(self):
         dbmodels.destroy_tables()
+        dbmodels.db.session.remove()
 
     def test_adding_users_to_groups(self):
         r = self.app.get('/groups/schwingers')
@@ -474,12 +497,6 @@ class TestUserGroupAssociation(unittest.TestCase):
         r = self.app.get('/groups/hammers')
         self.assertEqual(r.status_code, 200)
         self.assertEqual(len(json.loads(r.data)['users']), 1)
-
-    def test_put_user_add_updates_group(self):
-        pass
-
-    def test_put_user_remove_updates_group(self):
-        pass
 
 
 if __name__ == '__main__':

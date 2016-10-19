@@ -11,8 +11,6 @@ import dbmodels
 app = Flask('aviato')
 LOG = app.logger
 
-# to suppress some deprecation warnings
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 
 @app.route('/users/<userid>')
@@ -26,21 +24,45 @@ def get_user(userid):
 
 @app.route('/users', methods=('post',))
 def add_user():
-    if ('first_name' not in request.json or
-            'last_name' not in request.json or
-            'userid' not in request.json):
-        return 'first_name, last_name, and userid are required', 400
+    if ('first_name' not in request.get_json() or
+            'last_name' not in request.get_json() or
+            'userid' not in request.get_json() or
+            'groups' not in request.get_json()):
+        return 'first_name, last_name, userid, and groups are required', 400
 
-    if db.get_user(request.json['userid']):
-        return 'User(%s) already exists' % request.json['userid'], 418
+    if db.get_user(request.get_json()['userid']):
+        return 'User(%s) already exists' % request.get_json()['userid'], 418
+
     try:
-        user = db.create_user(request.json['first_name'],
-                              request.json['last_name'],
-                              request.json['userid'],
-                              request.json.get('groups', []))
+        user = db.create_user(request.get_json()['first_name'],
+                              request.get_json()['last_name'],
+                              request.get_json()['userid'],
+                              request.get_json()['groups'])
     except db.UserGroupDoesNotExist as e:
         return 'cannot create user, %s' % e, 400
     LOG.info('added %r', user)
+
+    return user.to_json()
+
+
+@app.route('/users/<userid>', methods=('put',))
+def update_user(userid):
+    if ('first_name' not in request.get_json() or
+            'last_name' not in request.get_json() or
+            'userid' not in request.get_json() or
+            'groups' not in request.get_json()):
+        return 'first_name, last_name, userid, and groups are required', 400
+
+    if not db.get_user(userid):
+        return 'User(%s) does not exist' % userid, 404
+    try:
+        user = db.update_user(request.get_json()['first_name'],
+                              request.get_json()['last_name'],
+                              userid,
+                              request.get_json()['groups'])
+    except db.UserGroupDoesNotExist as e:
+        return 'cannot update user, %s' % e, 400
+    LOG.info('updated %r', user)
 
     return user.to_json()
 
@@ -64,13 +86,30 @@ def get_group(name):
 
 @app.route('/groups', methods=('post',))
 def add_group():
-    if db.get_group(request.json['name']):
-        return 'Group(%s) already exists' % request.json['name'], 418
-    group = db.create_group(request.json['name'])
+    if db.get_group(request.get_json()['name']):
+        return 'Group(%s) already exists' % request.get_json()['name'], 418
+    group = db.create_group(request.get_json()['name'])
     LOG.info('added %r', group)
 
     return group.to_json()
 
+
+@app.route('/groups/<name>', methods=('put',))
+def update_group(name):
+    if 'name' not in request.get_json() or 'users' not in request.get_json():
+        return 'first_name, last_name, userid, and groups are required', 401
+
+    if not db.get_group(name):
+        return 'Group(%) does not exist' % name, 404
+
+    try:
+        user = db.update_group(name,
+                               request.get_json()['users'])
+    except db.UserDoesNotExist as e:
+        return 'cannot update group, %s' % e, 402
+    LOG.info('updated %r', user)
+
+    return user.to_json()
 
 @app.route('/groups/<name>', methods=('delete',))
 def delete_group(name):
