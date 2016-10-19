@@ -1,19 +1,24 @@
-while this app is code complete now and easy to run, the data isn't persistent
+# use with heroku is easiest
+#[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/tr3buchet/aviato)
 
-i will be updating the deploy mechanisms shortly
-
-for now
+# deploying manually
 
 ## install
 clone the git repo
 
 ## run tests
 `python tests.py`
+`flake8 .`
 
 ## run the server
-`python app.py`
+```
+# set this to your database url
+export DATABASE_URL='sqlite:///:memory:'
+export PORT='5000'
+python app.py
+```
 
-## use examples
+## local use examples
 ```
 curl -s -H "Content-Type: application/json" -X POST -d '{"name":"dogs"}' localhost:5000/groups
 curl -s -H "Content-Type: application/json" -X POST -d '{"name":"cats"}' localhost:5000/groups
@@ -24,4 +29,3 @@ curl -s localhost:5000/users/jschwing
 ```
 
 
-#[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/tr3buchet/aviato)
