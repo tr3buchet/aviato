@@ -11,5 +11,11 @@
     "addons": [
         "heroku-postgresql"
     ],
-    "generator": "https://www.expeditedssl.com/heroku-button-maker"
+    "generator": "https://www.expeditedssl.com/heroku-button-maker",
+    "formation": {
+        "web": {
+            "quantity": 1,
+            "size": "free"
+        }
+    }
 }
